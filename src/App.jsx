@@ -9,6 +9,7 @@ import {
   Modal,
   Button,
   DatePicker,
+  Switch,
 } from "antd";
 import ReactQuill from "react-quill";
 import TextEditor from "./components/TextEditor";
@@ -17,7 +18,7 @@ import dayjs from "dayjs";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
-import { HolderOutlined, SearchOutlined  } from "@ant-design/icons";
+import { HolderOutlined, SearchOutlined } from "@ant-design/icons";
 import { DndContext } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
@@ -202,6 +203,31 @@ function App() {
     }
   }
 
+  async function updateTaskStatus(id,status) {
+
+    try {
+      const result = (
+        await api.put(`/api/tasks/status/${id}`, {status : status} )
+      ).data;
+
+      setIsModalOpen(false);
+      if(status === 1){
+        notify("Complete Tasks Successful");
+      }
+      if(status === 0){
+        notify("Uncomplete Tasks Successful");
+      }
+      return result.data;
+    } catch (error) {
+      console.log(error);
+      console.log(error.response?.data);
+      console.log(error.message);
+    } finally {
+      console.log("done");
+    }
+  }
+
+
   async function handlerDelete(taskData) {
     setOpenConfirmModal(true);
     setSelectedTasks(taskData);
@@ -281,53 +307,15 @@ function App() {
     }
   };
 
-  const columns = [
-    {
-      align: "center",
-      key: "sort",
-      width: 80,
-      render: () => <DragHandle />,
-    },
-    {
-      title: "Title",
-      dataIndex: "title",
-      key: "title",
-    },
-    {
-      title: "Detail",
-      dataIndex: "detail",
-      key: "detail",
-      render: (value, record) => (
-        <div dangerouslySetInnerHTML={{ __html: record.detail }} />
-      ),
-    },
-    {
-      title: "Start Date",
-      dataIndex: "startdate",
-      key: "startdate",
-      render: (value) => <> {dayjs(value).format("YYYY-MM-DD HH:mm:ss")} </>,
-    },
-    {
-      title: "End Date",
-      dataIndex: "enddate",
-      key: "enddate",
-      render: (value) => <> {dayjs(value).format("YYYY-MM-DD HH:mm:ss")} </>,
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Space size="middle">
-          <a onClick={() => handlerUpdate(record)}>Edit</a>
-          <a onClick={() => handlerDelete(record)}>Delete</a>
-        </Space>
-      ),
-    },
-  ];
 
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const onChange = (id,checked) => {
+    updateTaskStatus(id, Number(checked))
+  };
+
 
   return (
     <>
@@ -494,6 +482,7 @@ function App() {
                     <> {dayjs(value).format("YYYY-MM-DD HH:mm:ss")} </>
                   )}
                 />
+
                 <Column
                   title="Action"
                   key="action"
@@ -502,6 +491,15 @@ function App() {
                       <a onClick={() => handlerUpdate(record)}>Edit</a>
                       <a onClick={() => handlerDelete(record)}>Delete</a>
                     </Space>
+                  )}
+                />
+
+                <Column
+                  title="Complete"
+                  dataIndex="status"
+                  key="status"
+                  render={(value,record) => (
+                    <Switch defaultChecked={value === 1} onChange={(checked) => onChange(record.row_id , checked)} />
                   )}
                 />
               </Table>

@@ -137,8 +137,29 @@ taskRouter.put("/tasks/detail/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Error on add task " + error });
   }
-
 });
+
+taskRouter.put("/tasks/status/:id", async (req, res) => {
+
+  const taskId = req.params.id;
+  const taskData = req.body;
+  console.log(taskData)
+  if (!taskId) {
+    return res.status(404).send( { error: "Task not found" + error } );
+  }
+
+    const query = `UPDATE public.tasks
+    SET status='${taskData.status}'
+    WHERE row_id=${taskId}`;
+
+  try {
+    await connectToDB(query);
+    res.status(200).json({ success: "Update Task Status" });
+  } catch (error) {
+    res.status(500).json({ error: "Error on add task " + error });
+  }
+});
+
 
 taskRouter.delete("/tasks/:id", async (req, res) => {
   const taskID = req.params.id;
